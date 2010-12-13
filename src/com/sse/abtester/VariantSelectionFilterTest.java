@@ -18,16 +18,39 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockHttpSession;
 
+// TODO: Auto-generated Javadoc
+/**
+ * The Class VariantSelectionFilterTest.
+ */
 public class VariantSelectionFilterTest {
+
+    /** The VSKEY. */
     String VSKEY = "VSKEY";
+
+    /** The TESTKEY. */
     int TESTKEY = 123;
+
+    /** The fc. */
     FilterChain fc;
+
+    /** The mock req. */
     MockHttpServletRequest mockReq;
+
+    /** The mock res. */
     MockHttpServletResponse mockRes;
+
+    /** The vsf. */
     VariantSelectionFilter vsf;
+
+    /** The VM. */
     VariantManager VM;
+
+    /** The testvariant. */
     VariantBean testvariant;
 
+    /**
+     * Reinit.
+     */
     @Before
     public void reinit(){
         // make a Mockito mock of the FC so we can verify it gets called
@@ -42,6 +65,12 @@ public class VariantSelectionFilterTest {
         vsf.setVSKEY(VSKEY);
     }
 
+    /**
+     * Test null vm is safe.
+     *
+     * @throws IOException Signals that an I/O exception has occurred.
+     * @throws ServletException the servlet exception
+     */
     @Test
     public void testNullVMIsSafe() throws IOException, ServletException {
         vsf.setVariantManager(null);
@@ -49,6 +78,12 @@ public class VariantSelectionFilterTest {
         verify(fc).doFilter(mockReq, mockRes); // should still invoke chain
     }
 
+    /**
+     * Test enrolls req if no cookie.
+     *
+     * @throws IOException Signals that an I/O exception has occurred.
+     * @throws ServletException the servlet exception
+     */
     @Test
     public void testEnrollsReqIfNoCookie() throws IOException, ServletException {
 
@@ -68,6 +103,12 @@ public class VariantSelectionFilterTest {
         verify(VM).publishVariationResponse(mockRes);
     }
 
+    /**
+     * Test updates vm if cookie.
+     *
+     * @throws IOException Signals that an I/O exception has occurred.
+     * @throws ServletException the servlet exception
+     */
     @Test
     public void testUpdatesVMIfCookie() throws IOException,
             ServletException {

@@ -9,8 +9,15 @@ import org.apache.commons.math.stat.Frequency;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 
+// TODO: Auto-generated Javadoc
+/**
+ * The Class VariationAssignerTest.
+ */
 public class VariationAssignerTest {
 
+    /**
+     * Test enroll request is null if not enrolled.
+     */
     @Test
     public void testEnrollRequestIsNullIfNotEnrolled() {
         VariationAssigner<VariantBean> va =
@@ -20,6 +27,11 @@ public class VariationAssignerTest {
         assertEquals("should get back null for no enrollment", null, result);
     }
 
+    /**
+     * Test n variants.
+     *
+     * @param num_variants the num_variants
+     */
     public void testNVariants(int num_variants){
         // make up some variants
         AbstractMap<String,IVariant<VariantBean>> coll =
@@ -53,6 +65,9 @@ public class VariationAssignerTest {
         }
     }
 
+    /**
+     * Test distribution tracks target freq.
+     */
     @Test
     public void testDistributionTracksTargetFreq(){
         testNVariants(0);

@@ -7,7 +7,15 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+// TODO: Auto-generated Javadoc
+/**
+ * The Interface IVariationStrategy.
+ */
 public interface IVariationStrategy {
+
+    /**
+     * The Enum Strategy.
+     */
     enum Strategy {
         /**
          * Basic strategy, just call the chain.
@@ -18,21 +26,27 @@ public interface IVariationStrategy {
          * use of the ABSTYLE is up to the Varier.
          */
         ATTACH_STYLE,
-        /**
-         * Tells ABTester to forward the request (with attached properties) to a
-         * name (as identified by the strategyValue)
-         */
+
+        /** Tells ABTester to forward the request (with attached properties) to a name (as identified by the strategyValue). */
         FORWARD,
-        /**
-         * Tells ABTester to redirect the client browser, to a URL given in the
-         * strategyValue
-         */
+
+        /** Tells ABTester to redirect the client browser, to a URL given in the strategyValue. */
         REDIRECT
 
     }
 
+    /**
+     * Gets the strategy.
+     *
+     * @return the strategy
+     */
     Strategy getStrategy();
 
+    /**
+     * Gets the strategy value.
+     *
+     * @return the strategy value
+     */
     String getStrategyValue();
 
     /**
@@ -43,10 +57,19 @@ public interface IVariationStrategy {
      * <li>FORWARD => used to name the servlet to which to Forward
      * </ul>
      *
-     * @param selector
+     * @param selector the new strategy value
      */
     void setStrategyValue(String selector);
 
+    /**
+     * Execute.
+     *
+     * @param chain the chain
+     * @param hReq the h req
+     * @param hResp the h resp
+     * @throws IOException Signals that an I/O exception has occurred.
+     * @throws ServletException the servlet exception
+     */
     void execute(FilterChain chain, HttpServletRequest hReq,
             HttpServletResponse hResp)
          throws IOException, ServletException;

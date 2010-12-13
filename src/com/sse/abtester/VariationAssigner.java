@@ -10,21 +10,31 @@ import org.apache.commons.math.random.RandomDataImpl;
 
 import java.lang.Math;
 
+// TODO: Auto-generated Javadoc
 /**
  * Holds the known test requests (VariationRequestBeans) and allocates requests
  * between them.
  *
+ * @param <T> the generic type
  * @author wstidolph
- *
  */
 public class VariationAssigner<T> implements IVariationAssigner<VariantBean> {
 
+    /** The Constant DEFAULT_PRECISION. */
     static final int DEFAULT_PRECISION = 3; // will cause generation of 1000 per Variant
+
+    /** The Constant MAX_PRECISION. */
     static final int MAX_PRECISION = 5; // room for 100,000 ... that seems a lot!
+
+    /** The precision. */
     int precision = DEFAULT_PRECISION;
 
+    /** The weighted collection. */
     ArrayList<IVariant<VariantBean>> weightedCollection;
 
+    /* (non-Javadoc)
+     * @see com.sse.abtester.IVariationAssigner#enrollRequest(HttpServletRequest)
+     */
     @Override
     public IVariant<VariantBean> enrollRequest(HttpServletRequest request) {
         // choose one of the weighted collection at random
@@ -32,8 +42,16 @@ public class VariationAssigner<T> implements IVariationAssigner<VariantBean> {
         return getNext(weightedCollection, rangen);
     }
 
+    /** The rangen. */
     RandomData rangen = new RandomDataImpl();
 
+    /**
+     * Gets the next.
+     *
+     * @param wc the wc
+     * @param generator the generator
+     * @return the next
+     */
     protected IVariant<VariantBean> getNext(
             ArrayList<IVariant<VariantBean>> wc, RandomData generator) {
         if (wc == null || wc.size() == 0)
@@ -42,6 +60,13 @@ public class VariationAssigner<T> implements IVariationAssigner<VariantBean> {
         return wc.get(random);
     }
 
+    /**
+     * Generate weighted collection.
+     *
+     * @param src the src
+     * @param precision the precision
+     * @return the array list
+     */
     ArrayList<IVariant<VariantBean>> generateWeightedCollection(
             AbstractMap<String, IVariant<VariantBean>> src,
             int precision) {
@@ -73,6 +98,9 @@ public class VariationAssigner<T> implements IVariationAssigner<VariantBean> {
         return newWeightedCollection;
     }
 
+    /* (non-Javadoc)
+     * @see com.sse.abtester.IVariationAssigner#setIVariantCollection(AbstractMap)
+     */
     public void setIVariantCollection(
             AbstractMap<String, IVariant<VariantBean>> ivc) {
         ArrayList<IVariant<VariantBean>> newWeightedCollection =
@@ -80,6 +108,11 @@ public class VariationAssigner<T> implements IVariationAssigner<VariantBean> {
         doWcReplacement(newWeightedCollection);
     }
 
+    /**
+     * Do wc replacement.
+     *
+     * @param newWc the new wc
+     */
     private synchronized void doWcReplacement(
             ArrayList<IVariant<VariantBean>> newWc) {
         weightedCollection = newWc;

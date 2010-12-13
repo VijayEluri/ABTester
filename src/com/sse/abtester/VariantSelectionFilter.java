@@ -15,131 +15,171 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+// TODO: Auto-generated Javadoc
 /**
- * Servlet Filter implementation class VariantSelectionFilter
+ * Servlet Filter implementation class VariantSelectionFilter.
  */
 public class VariantSelectionFilter implements Filter {
 
-	VariantManager VM;
+    /** The VM. */
+    VariantManager VM;
 
-	String VSKEY = "VSKEY"; // set default
-	IKeyGenerator kgen;
-	FilterConfig filterConfig = null;
+    /** The VSKEY. */
+    String VSKEY = "VSKEY"; // set default
 
-	public FilterConfig getFilterConfig() {
-		return filterConfig;
-	}
+    /** The kgen. */
+    IKeyGenerator kgen;
 
-	/**
-	 * Attach variant selection and publishing to the request processing.
-	 * 
-	 * @see Filter#doFilter(ServletRequest, ServletResponse, FilterChain)
-	 */
-	@Override
-	public void doFilter(ServletRequest request, ServletResponse response,
-			FilterChain chain) throws IOException, ServletException {
+    /** The filter config. */
+    FilterConfig filterConfig = null;
 
-		HttpServletRequest hReq = (HttpServletRequest) request;
-		HttpServletResponse hRes = (HttpServletResponse) response;
-		IVariant<VariantBean> theVariant = null;
-		IVariationStrategy variationStrategy = null;
+    /**
+     * Gets the filter config.
+     *
+     * @return the filter config
+     */
+    public FilterConfig getFilterConfig() {
+        return filterConfig;
+    }
 
-		HttpSession session = hReq.getSession();
+    /**
+     * Attach variant selection and publishing to the request processing.
+     *
+     * @param request the request
+     * @param response the response
+     * @param chain the chain
+     * @throws IOException Signals that an I/O exception has occurred.
+     * @throws ServletException the servlet exception
+     * @see Filter#doFilter(ServletRequest, ServletResponse, FilterChain)
+     */
+    @Override
+    public void doFilter(ServletRequest request, ServletResponse response,
+            FilterChain chain) throws IOException, ServletException {
 
-		if (VM != null) {
-			String vsKey = getCookieValue(hReq);
-			if (vsKey != "") {
-				// has a key, so is enrolled, just update
-				// (and get the variant control)
-				theVariant = VM.updateVariant(vsKey);
-			} else {
-				// give opportunity to enroll, map key into a Cookie
-				theVariant = VM.enrollRequest(hReq);
-				if (theVariant != null)
-					vsKey = "" + theVariant.getKey();
-				if (vsKey != null && vsKey != "") {
-					Cookie cookie = new Cookie(VSKEY, vsKey);
-					hRes.addCookie(cookie);
-				}
-			}
-			if (theVariant != null) {
-				Properties props = theVariant.getVariantProps();
-				session.setAttribute(VSKEY, props);
-				variationStrategy = theVariant.getVariationStrategy();
-			}
-		}
-		if (variationStrategy == null) {
-			variationStrategy = new VariationStrategyDefault();
-			// chain.doFilter(hReq, hRes);
-		}
-		// attach the variation properties to the HttpSession
+        HttpServletRequest hReq = (HttpServletRequest) request;
+        HttpServletResponse hRes = (HttpServletResponse) response;
+        IVariant<VariantBean> theVariant = null;
+        IVariationStrategy variationStrategy = null;
 
-		variationStrategy.execute(chain, hReq, hRes);
+        HttpSession session = hReq.getSession();
 
-		// we always offer up the response for pub,
-		// even if it wasn't varied
-		if (VM != null)
-			VM.publishVariationResponse(hRes);
-	}
+        if (VM != null) {
+            String vsKey = getCookieValue(hReq);
+            if (vsKey != "") {
+                // has a key, so is enrolled, just update
+                // (and get the variant control)
+                theVariant = VM.updateVariant(vsKey);
+            } else {
+                // give opportunity to enroll, map key into a Cookie
+                theVariant = VM.enrollRequest(hReq);
+                if (theVariant != null)
+                    vsKey = "" + theVariant.getKey();
+                if (vsKey != null && vsKey != "") {
+                    Cookie cookie = new Cookie(VSKEY, vsKey);
+                    hRes.addCookie(cookie);
+                }
+            }
+            if (theVariant != null) {
+                Properties props = theVariant.getVariantProps();
+                session.setAttribute(VSKEY, props);
+                variationStrategy = theVariant.getVariationStrategy();
+            }
+        }
+        if (variationStrategy == null) {
+            variationStrategy = new VariationStrategyDefault();
+            // chain.doFilter(hReq, hRes);
+        }
+        // attach the variation properties to the HttpSession
 
-	/**
-	 * @param request
-	 * @return cookie value attached to VSKEY, or empty String.
-	 */
-	private String getCookieValue(HttpServletRequest request) {
-		Cookie[] cookies = request.getCookies();
-		String cookieValue = "";
-		if (cookies == null)
-			return cookieValue;
+        variationStrategy.execute(chain, hReq, hRes);
 
-		for (Cookie c : cookies) {
-			if (c.getName() == VSKEY) {
-				cookieValue = c.getValue();
-				break;
-			}
-		}
-		return cookieValue;
-	}
+        // we always offer up the response for pub,
+        // even if it wasn't varied
+        if (VM != null)
+            VM.publishVariationResponse(hRes);
+    }
 
-	/**
-	 * Default constructor.
-	 */
-	public VariantSelectionFilter() {
-	}
+    /**
+     * Gets the cookie value.
+     *
+     * @param request the request
+     * @return cookie value attached to VSKEY, or empty String.
+     */
+    private String getCookieValue(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        String cookieValue = "";
+        if (cookies == null)
+            return cookieValue;
 
-	/**
-	 * Convenience constructor, avoid use of setVariantConstructor.
-	 * 
-	 * @param vm
-	 */
-	public VariantSelectionFilter(VariantManager vm) {
-		VM = vm;
-	}
+        for (Cookie c : cookies) {
+            if (c.getName() == VSKEY) {
+                cookieValue = c.getValue();
+                break;
+            }
+        }
+        return cookieValue;
+    }
 
-	public void setVariantManager(VariantManager vm) {
-		VM = vm;
-	}
+    /**
+     * Default constructor.
+     */
+    public VariantSelectionFilter() {
+    }
 
-	public void setVSKEY(String VSKEY) {
-		this.VSKEY = VSKEY;
-	}
+    /**
+     * Convenience constructor, avoid use of setVariantConstructor.
+     *
+     * @param vm the vm
+     */
+    public VariantSelectionFilter(VariantManager vm) {
+        VM = vm;
+    }
 
-	public void setKgen(IKeyGenerator kgen) {
-		this.kgen = kgen;
-	}
+    /**
+     * Sets the variant manager.
+     *
+     * @param vm the new variant manager
+     */
+    public void setVariantManager(VariantManager vm) {
+        VM = vm;
+    }
 
-	/**
-	 * @see Filter#init(FilterConfig)
-	 */
-	@Override
-	public void init(FilterConfig fConfig) throws ServletException {
-		filterConfig = fConfig;
-	}
+    /**
+     * Sets the vSKEY.
+     *
+     * @param VSKEY the new vSKEY
+     */
+    public void setVSKEY(String VSKEY) {
+        this.VSKEY = VSKEY;
+    }
 
-	/**
-	 * @see Filter#destroy()
-	 */
-	@Override
-	public void destroy() {
-	}
+    /**
+     * Sets the kgen.
+     *
+     * @param kgen the new kgen
+     */
+    public void setKgen(IKeyGenerator kgen) {
+        this.kgen = kgen;
+    }
+
+    /**
+     * Inits the.
+     *
+     * @param fConfig the f config
+     * @throws ServletException the servlet exception
+     * @see Filter#init(FilterConfig)
+     */
+    @Override
+    public void init(FilterConfig fConfig) throws ServletException {
+        filterConfig = fConfig;
+    }
+
+    /**
+     * Destroy.
+     *
+     * @see Filter#destroy()
+     */
+    @Override
+    public void destroy() {
+    }
 }

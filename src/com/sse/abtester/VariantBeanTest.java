@@ -4,8 +4,15 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
+// TODO: Auto-generated Javadoc
+/**
+ * The Class VariantBeanTest.
+ */
 public class VariantBeanTest {
 
+    /**
+     * Test hash code.
+     */
     @Test
     public void testHashCode() {
         IVariant<VariantBean> iv = new VariantBean();
@@ -15,6 +22,9 @@ public class VariantBeanTest {
         assertEquals(hc, copy.hashCode());
     }
 
+    /**
+     * Test copy.
+     */
     @Test
     public void testCopy() {
         int TESTKEY=13;

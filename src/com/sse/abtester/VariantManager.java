@@ -14,30 +14,70 @@ import javax.servlet.http.HttpServletResponse;
 import lombok.Getter;
 import lombok.Setter;
 
+// TODO: Auto-generated Javadoc
 /**
- * @author wstidolph
+ * The Class VariantManager.
  *
+ * @author wstidolph
  */
 public class VariantManager {
 
     /* variables */
-    @Setter @Getter IVariationAssigner<VariantBean> assigner;
-    @Setter @Getter double controlPercentage = 1.0; // be default, don't touch requests
+    /** The assigner. */
 
+    /**
+     * Sets the assigner.
+     *
+     * @param assigner the new assigner
+     */
+    @Setter
+ /**
+  * Gets the assigner.
+  *
+  * @return the assigner
+  */
+ @Getter IVariationAssigner<VariantBean> assigner;
+
+    /**
+     * Sets the control percentage.
+     *
+     * @param controlPercentage the new control percentage
+     */
+    @Setter
+ /**
+  * Gets the control percentage.
+  *
+  * @return the control percentage
+  */
+ @Getter double controlPercentage = 1.0; // be default, don't touch requests
+
+    /** The known variants. */
     AbstractMap<String,IVariant<VariantBean>> knownVariants
       = new ConcurrentHashMap<String,IVariant<VariantBean>>();
 
+    /**
+     * Gets the named variant set.
+     *
+     * @param key the key
+     * @return the named variant set
+     */
     public IVariant<VariantBean> getNamedVariantSet(String key) {
         return knownVariants.get(key);
     }
 
+    /**
+     * Update tracking for variant.
+     *
+     * @param vs the vs
+     */
     public void updateTrackingForVariant(IVariant<VariantBean> vs) {
         vs.incRespondedCounter();
     }
 
     /**
-     * Routes some fraction of the requests into variant assignment,
-     * @param request
+     * Routes some fraction of the requests into variant assignment,.
+     *
+     * @param request the request
      * @return a variant bean (can be null for no variation)
      */
     public IVariant<VariantBean> enrollRequest(HttpServletRequest request) {
@@ -54,8 +94,8 @@ public class VariantManager {
      * Update the identified Variant (if it exists). Can mark
      * the variant as not active to prevent future dispatches.
      *
-     * @param key
-     *            string to identify a particular VariantSet
+     * @param key string to identify a particular VariantSet
+     * @return the i variant
      */
     public IVariant<VariantBean> updateVariant(String key) {
         IVariant<VariantBean> iv = knownVariants.get(key);
@@ -68,6 +108,11 @@ public class VariantManager {
         return iv;
     }
 
+    /**
+     * Publish variation response.
+     *
+     * @param response the response
+     */
     public void publishVariationResponse(HttpServletResponse response) {
         // TODO hook up to JMS
         // by getting the key out of this response object
@@ -77,8 +122,10 @@ public class VariantManager {
 
     /**
      * Map a VRB into a VariantBean, put it into the knwonVariants
-     * and notify the 'assigner'
-     * @param vrb
+     * and notify the 'assigner'.
+     *
+     * @param vrb the vrb
+     * @return the i variant
      */
     public IVariant<VariantBean> addVariationRequest(VariationRequestBean vrb){
 
@@ -91,6 +138,11 @@ public class VariantManager {
         return vb;
     }
 
+    /**
+     * Deactivate iv.
+     *
+     * @param ivb the ivb
+     */
     private void deactivateIV(IVariant<VariantBean> ivb){
         if(ivb != null){
             ivb.setDispatchable(false);
@@ -101,7 +153,8 @@ public class VariantManager {
     /**
      * Remove the VRB (find it by its requestKey)
      * and notify the assigner.
-     * @param vrb
+     *
+     * @param key the key
      * @return the IVariant that represented the removed request
      */
     public IVariant<VariantBean> removeVariationRequestByRequestKey(String key){
@@ -114,10 +167,19 @@ public class VariantManager {
         return o;
     }
 
+    /**
+     * Gets the i variant by request key.
+     *
+     * @param key the key
+     * @return the i variant by request key
+     */
     public IVariant<VariantBean> getIVariantByRequestKey(String key){
         IVariant<VariantBean> o = knownVariants.get(key);
         return o;
     }
     /* constructor */
+    /**
+     * Instantiates a new variant manager.
+     */
     public VariantManager() { }
 }
