@@ -1,6 +1,6 @@
 See http://waynedge.blogspot.com/p/ab-testing.html
 
-LICENSE: GPLv3 
+LICENSE: AGPLv3
 This is a project to provide a variant-selection
 front end for web applications. The idea is that the app developer(s)
 will be able to declare 'variants' of web pages or components,
@@ -9,4 +9,4 @@ the effects of those variants as compared to the 'control' (non-varied)
 versions.
 
 [20101213] First commit, not yet really useful but I want to start
-keeping it on github (and using that issue tracker, gists, etc). No license attached yet, plan to use GPLv3.
+keeping it on github (and using that issue tracker, gists, etc).
