@@ -40,7 +40,7 @@ public class VariantManager {
   *
   * @return the assigner
   */
- @Getter IVariationAssigner<VariantBean> assigner;
+ @Getter private IVariationAssigner<VariantBean> assigner;
 
     /**
      * Sets the control percentage.
@@ -49,25 +49,24 @@ public class VariantManager {
      */
     @Setter
  /**
-  * Gets the control percentage.
+  * Gets the control percentage. Defaults to 1.0 (no variants)
   *
   * @return the control percentage
   */
- @Getter double controlPercentage = 1.0; // be default, don't touch requests
+ @Getter private double controlPercentage = 1.0;
 
     /** The known variants. */
-    AbstractMap<String,IVariant<VariantBean>> knownVariants
-      = new ConcurrentHashMap<String,IVariant<VariantBean>>();
+    private AbstractMap<String, IVariant<VariantBean>> knownVariants
+      = new ConcurrentHashMap<String, IVariant<VariantBean>>();
 
 
     /**
      * Update tracking of received responses for variant.
-     * TODO - test for meeting limit, and deactivate variant.
      *
-     * @param vs the variant to update
+     * @param iv the variant to update
      */
-    public void updateTrackingForVariant(IVariant<VariantBean> vs) {
-        vs.incRespondedCounter();
+    public void updateTrackingForVariant(final IVariant<VariantBean> iv) {
+        iv.incRespondedCounter();
     }
 
     /**
@@ -76,12 +75,12 @@ public class VariantManager {
      * @param request the request
      * @return a variant bean (can be null for no variation)
      */
-    public IVariant<VariantBean> enrollRequest(HttpServletRequest request) {
+    public IVariant<VariantBean>
+    enrollRequest(final HttpServletRequest request) {
         IVariant<VariantBean> assigned = null;
-        if (Math.random() > controlPercentage) {
+        if (assigner != null && Math.random() > controlPercentage) {
             assigned = assigner.enrollRequest(request);
 
-            IVariationStrategy vs = assigned.getVariationStrategy();
         }
         return assigned;
     }
@@ -93,11 +92,11 @@ public class VariantManager {
      * @param key string to identify a particular VariantSet
      * @return the i variant
      */
-    public IVariant<VariantBean> updateVariant(String key) {
+    public IVariant<VariantBean> updateVariant(final String key) {
         IVariant<VariantBean> iv = knownVariants.get(key);
-        if (iv != null){
+        if (iv != null) {
             updateTrackingForVariant(iv);
-            if(iv.getRespondedCount() >= iv.getRequestedExecutions()){
+            if (iv.getRespondedCount() >= iv.getRequestedExecutions()) {
                 deactivateIV(iv);
             }
         }
@@ -109,7 +108,8 @@ public class VariantManager {
      *
      * @param response the response
      */
-    public void publishVariationResponse(HttpServletResponse response) {
+    public void
+    publishVariationResponse(final HttpServletResponse response) {
         // TODO hook up to JMS
         // by getting the key out of this response object
         // and publishing the related IVarient's updated status
@@ -117,13 +117,14 @@ public class VariantManager {
     }
 
     /**
-     * Map a VRB into a VariantBean, put it into the knwonVariants
+     * Map a VRB into a VariantBean, put it into the knownVariants
      * and notify the 'assigner'.
      *
      * @param vrb the vrb
-     * @return the i variant
+     * @return the generated variant.
      */
-    public IVariant<VariantBean> addVariationRequest(VariationRequestBean vrb){
+    public IVariant<VariantBean>
+    addVariationRequest(final VariationRequestBean vrb) {
 
         IVariant<VariantBean> vb = new VariantBean(vrb.requestKey);
         vb.setRequestedExecutions(vrb.requestedExecutions);
@@ -139,8 +140,8 @@ public class VariantManager {
      *
      * @param ivb the ivb
      */
-    private void deactivateIV(IVariant<VariantBean> ivb){
-        if(ivb != null){
+    private void deactivateIV(final IVariant<VariantBean> ivb) {
+        if (ivb != null) {
             ivb.setDispatchable(false);
             System.out.println("deactivating variant: " + ivb.getName()); // TODO log
         }
@@ -153,9 +154,10 @@ public class VariantManager {
      * @param key the key
      * @return the IVariant that represented the removed request
      */
-    public IVariant<VariantBean> removeVariationRequestByRequestKey(String key){
+    public IVariant<VariantBean>
+    removeVariationRequestByRequestKey(final String key) {
         IVariant<VariantBean> o = getIVariantByRequestKey(key);
-        if(o != null){
+        if (o != null) {
             deactivateIV(o);
             knownVariants.remove(o);
             assigner.setIVariantCollection(knownVariants);
@@ -169,7 +171,8 @@ public class VariantManager {
      * @param key the key
      * @return the i variant by request key
      */
-    public IVariant<VariantBean> getIVariantByRequestKey(String key){
+    public IVariant<VariantBean>
+    getIVariantByRequestKey(final String key) {
         IVariant<VariantBean> o = knownVariants.get(key);
         return o;
     }
