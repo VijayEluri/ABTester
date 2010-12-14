@@ -64,12 +64,14 @@ public interface IVariant<T> extends IHasTargetFreq {
     /* (non-Javadoc)
      * @see com.sse.abtester.IHasTargetFreq#getTargetFreq()
      */
-    double getTargetFreq();
+    @Override
+	double getTargetFreq();
 
     /* (non-Javadoc)
      * @see com.sse.abtester.IHasTargetFreq#setTargetFreq(double)
      */
-    void setTargetFreq(double targetFreq);
+    @Override
+	void setTargetFreq(double targetFreq);
 
     /**
      * Checks if the Variant is "dispatchable." If false, the

@@ -110,7 +110,8 @@ public class VariationAssigner<T> implements IVariationAssigner<VariantBean> {
     /* (non-Javadoc)
      * @see com.sse.abtester.IVariationAssigner#setIVariantCollection(AbstractMap)
      */
-    public void setIVariantCollection(
+    @Override
+	public void setIVariantCollection(
             AbstractMap<String, IVariant<VariantBean>> ivc) {
         ArrayList<IVariant<VariantBean>> newWeightedCollection =
             generateWeightedCollection(ivc, precision);

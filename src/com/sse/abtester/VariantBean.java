@@ -87,7 +87,8 @@ class VariantBean implements IVariant<VariantBean> {
      *
      * @see com.sse.abtester.IVariant#isDispatchable()
      */
-    public final boolean isDispatchable() {
+    @Override
+	public final boolean isDispatchable() {
         return this.isDispatchable;
     }
 
@@ -96,7 +97,8 @@ class VariantBean implements IVariant<VariantBean> {
      *
      * @see com.sse.abtester.IVariant#setDispatchable(boolean)
      */
-    public final void setDispatchable(final boolean active) {
+    @Override
+	public final void setDispatchable(final boolean active) {
         this.isDispatchable = active;
     }
 
@@ -106,7 +108,8 @@ class VariantBean implements IVariant<VariantBean> {
      * @see com.sse.abtester.IVariant#incDispatchedCounter()
      */
 
-    public @Synchronized
+    @Override
+	public @Synchronized
     final int incDispatchedCounter() {
         return ++dispatchedCount;
     };
@@ -116,7 +119,8 @@ class VariantBean implements IVariant<VariantBean> {
      *
      * @see com.sse.abtester.IVariant#incRespondedCounter()
      */
-    public @Synchronized
+    @Override
+	public @Synchronized
     final int incRespondedCounter() {
         return ++respondedCount;
     }
@@ -127,7 +131,8 @@ class VariantBean implements IVariant<VariantBean> {
      *
      * @see com.sse.abtester.IVariant#copy()
      */
-    public final VariantBean copy() {
+    @Override
+	public final VariantBean copy() {
         VariantBean copy = new VariantBean(this.name, this.variantProps);
         copy.setDispatchedCount(this.dispatchedCount);
         copy.setRequestedExecutions(this.requestedExecutions);
