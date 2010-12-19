@@ -3,12 +3,13 @@
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the GNU Affero Public License v3.0 which accompanies this distribution, and is available at
  * http://www.gnu.org/licenses/agpl-3.0.html
- * 
+ *
  * Contributors:
  *     Wayne Stidolph - initial API and implementation
  ******************************************************************************/
 package com.sse.abtester;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Properties;
 
@@ -25,6 +26,8 @@ import javax.servlet.http.HttpSession;
 
 import com.sse.abtester.external.IVariant;
 import com.sse.abtester.external.IVariationStrategy;
+import com.sse.abtester.strategies.Default;
+import com.sse.abtester.strategies.UrlRewrite;
 
 // TODO: Auto-generated Javadoc
 /**
@@ -90,19 +93,18 @@ public class VariantSelectionFilter implements Filter {
                     hRes.addCookie(cookie);
                 }
             }
-            if (theVariant != null) {
-                Properties props = theVariant.getVariantProps();
-                session.setAttribute(VSKEY, props);
+            if (theVariant != null && session != null) {
                 variationStrategy = theVariant.getVariationStrategy();
+                session.setAttribute(VSKEY, variationStrategy);
             }
         }
         if (variationStrategy == null) {
-            variationStrategy = new VariationStrategyDefault();
+            variationStrategy = new Default();
             // chain.doFilter(hReq, hRes);
         }
         // attach the variation properties to the HttpSession
 
-        variationStrategy.execute(chain, hReq, hRes);
+        variationStrategy.execute(filterConfig, chain, hReq, hRes);
 
         // we always offer up the response for pub,
         // even if it wasn't varied
@@ -174,9 +176,17 @@ public class VariantSelectionFilter implements Filter {
     }
 
     /**
-     * Inits the.
-     *
-     * @param fConfig the f config
+     * Inits the Filter. NOTE: this method won't be called by a
+     * default DelegatingFilterProxy, needs an entry in web.xml:
+     * &lt;filter><br>
+     *      &lt;display-name>ABTester&lt;/display-name><br>
+     *      &lt;filter-name>abtesterFilter&lt;/filter-name><br>
+     *      &lt;filter-class>org.springframework.web.filter.DelegatingFilterProxy&lt;/filter-class><br>
+     *      &lt;init-param><br>
+     *          &lt;param-name>targetFilterLifecycle&lt;/param-name><br>
+     *          &lt;param-value>true&lt;/param-value><br>
+     *      &lt;/init-param><br>
+     * @param fConfig the filter config
      * @throws ServletException the servlet exception
      * @see Filter#init(FilterConfig)
      */

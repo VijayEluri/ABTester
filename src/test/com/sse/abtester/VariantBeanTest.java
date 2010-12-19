@@ -3,7 +3,7 @@
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the GNU Affero Public License v3.0 which accompanies this distribution, and is available at
  * http://www.gnu.org/licenses/agpl-3.0.html
- * 
+ *
  * Contributors:
  *     Wayne Stidolph - initial API and implementation
  ******************************************************************************/
@@ -14,6 +14,8 @@ import static org.junit.Assert.*;
 import org.junit.Test;
 
 import com.sse.abtester.external.IVariant;
+import com.sse.abtester.external.IVariationStrategy;
+import com.sse.abtester.strategies.UrlRewrite;
 
 // TODO: Auto-generated Javadoc
 /**
@@ -27,6 +29,7 @@ public class VariantBeanTest {
     @Test
     public void testHashCode() {
         IVariant<VariantBean> iv = new VariantBean();
+        iv.setVariationStrategy(new UrlRewrite());
         int hc = iv.hashCode();
         assertFalse(hc ==0);
         IVariant<VariantBean> copy = iv.copy();
@@ -44,6 +47,7 @@ public class VariantBeanTest {
         IVariant<VariantBean> iv = new VariantBean();
         iv.setKey(TESTKEY);
         iv.setTargetFreq(TFIV);
+        iv.setVariationStrategy(new UrlRewrite());
 
         IVariant<VariantBean> copy = iv.copy();
         assertNotSame(iv,copy);

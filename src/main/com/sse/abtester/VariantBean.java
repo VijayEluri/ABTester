@@ -3,17 +3,15 @@
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the GNU Affero Public License v3.0 which accompanies this distribution, and is available at
  * http://www.gnu.org/licenses/agpl-3.0.html
- * 
+ *
  * Contributors:
  *     Wayne Stidolph - initial API and implementation
  ******************************************************************************/
 package com.sse.abtester;
 
-import java.util.Properties;
-
 import com.sse.abtester.external.IVariant;
-import com.sse.abtester.external.IVariationComponentSelector;
 import com.sse.abtester.external.IVariationStrategy;
+import com.sse.abtester.external.VariationRequestBean;
 
 import lombok.Data;
 import lombok.NonNull;
@@ -44,22 +42,43 @@ class VariantBean implements IVariant<VariantBean> {
     /** The target freq. */
     private double targetFreq;
 
-    /** The is dispatchable. */
-    private boolean isDispatchable = false;
-
-    /** The component selector. */
-    private IVariationComponentSelector componentSelector;
+    /** is this Variant available for new users? */
+    private boolean isDispatchable = true;
 
     /** The variation strategy. */
     private IVariationStrategy variationStrategy;
-
-    /** The variant props. */
-    private Properties variantProps = new Properties();
-
     /**
      * Instantiates a new variant bean.
      */
     public VariantBean() {
+    }
+
+    public VariantBean(final VariationRequestBean vrb) {
+        name = vrb.requestName;
+        requestedExecutions = vrb.requestedExecutions;
+        targetFreq = vrb.requestedTargetFreq;
+        if(requestedExecutions <1) isDispatchable = false;
+        String ss = vrb.variationStrategyClassName;
+        try{
+            Class stratClass = this.getClass().forName(ss);
+            if(stratClass != null){
+                variationStrategy = (IVariationStrategy)stratClass.newInstance();
+            }
+        } catch(ClassNotFoundException cnf){
+            System.out.println("Constructing VariantBean, could not find class " + ss);
+        }
+        catch (InstantiationException ie) {
+            System.out.println("Constructing VariantBean, failed to instantiate " + ss + " because " + ie.getMessage());
+        } catch (ClassCastException cce) {
+            System.out.println("Constructing VariantBean, Class " + ss + " cast to IVariationStrategy failed");
+        } catch (IllegalAccessException iae) {
+            System.out.println("Constructing VariantBean, couldn't find Class or nullary constructor for " + ss + " : " + iae.getMessage());
+        }
+
+        if(variationStrategy != null){
+            variationStrategy.setProps(vrb.variationProperties);
+            System.out.println("Created variationStrategy " + variationStrategy);
+        }
     }
 
     /**
@@ -72,27 +91,35 @@ class VariantBean implements IVariant<VariantBean> {
         this.name = variantDisplayName;
     }
 
-    /**
-     * Instantiates a new variant bean.
+    /*
+     * (non-Javadoc)
+     * TODO rework this to be extension-friendly!
      *
-     * @param variantDisplayName
-     *            the name
-     * @param variantProperties
-     *            the variant properties
+     * @see com.sse.abtester.IVariant#copy()
      */
-    public VariantBean(final String variantDisplayName,
-            final Properties variantProperties) {
-        this.name = variantDisplayName;
-        this.variantProps = variantProperties;
+    @Override
+    public final VariantBean copy() {
+        VariantBean copy = new VariantBean(this.name);
+        copy.setDispatchedCount(this.dispatchedCount);
+        copy.setRequestedExecutions(this.requestedExecutions);
+        copy.setRespondedCount(this.respondedCount);
+        copy.setTargetFreq(this.targetFreq);
+        copy.setKey(this.key);
+        copy.setDispatchable(this.isDispatchable);
+        if(variationStrategy != null)
+            copy.setVariationStrategy((IVariationStrategy) // cast
+                 this.variationStrategy.clone());
+        else
+            System.out.println("NULL variation strategy on " + name);
+        return copy;
     }
-
     /*
      * (non-Javadoc)
      *
      * @see com.sse.abtester.IVariant#isDispatchable()
      */
     @Override
-	public final boolean isDispatchable() {
+    public final boolean isDispatchable() {
         return this.isDispatchable;
     }
 
@@ -102,7 +129,7 @@ class VariantBean implements IVariant<VariantBean> {
      * @see com.sse.abtester.IVariant#setDispatchable(boolean)
      */
     @Override
-	public final void setDispatchable(final boolean active) {
+    public final void setDispatchable(final boolean active) {
         this.isDispatchable = active;
     }
 
@@ -113,7 +140,7 @@ class VariantBean implements IVariant<VariantBean> {
      */
 
     @Override
-	public @Synchronized
+    public @Synchronized
     final int incDispatchedCounter() {
         return ++dispatchedCount;
     };
@@ -124,26 +151,10 @@ class VariantBean implements IVariant<VariantBean> {
      * @see com.sse.abtester.IVariant#incRespondedCounter()
      */
     @Override
-	public @Synchronized
+    public @Synchronized
     final int incRespondedCounter() {
         return ++respondedCount;
     }
 
-    /*
-     * (non-Javadoc)
-     * TODO rework this to be extension-friendly!
-     *
-     * @see com.sse.abtester.IVariant#copy()
-     */
-    @Override
-	public final VariantBean copy() {
-        VariantBean copy = new VariantBean(this.name, this.variantProps);
-        copy.setDispatchedCount(this.dispatchedCount);
-        copy.setRequestedExecutions(this.requestedExecutions);
-        copy.setRespondedCount(this.respondedCount);
-        copy.setTargetFreq(this.targetFreq);
-        copy.setKey(this.key);
-        copy.setDispatchable(this.isDispatchable);
-        return copy;
-    }
+
 }

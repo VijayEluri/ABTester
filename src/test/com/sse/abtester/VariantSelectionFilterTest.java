@@ -3,7 +3,7 @@
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the GNU Affero Public License v3.0 which accompanies this distribution, and is available at
  * http://www.gnu.org/licenses/agpl-3.0.html
- * 
+ *
  * Contributors:
  *     Wayne Stidolph - initial API and implementation
  ******************************************************************************/
@@ -20,11 +20,14 @@ import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
 import org.junit.Before;
 import org.junit.Test;
+import org.springframework.mock.web.MockFilterConfig;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.mock.web.MockHttpSession;
 
 import com.sse.abtester.external.IVariationStrategy;
+import com.sse.abtester.strategies.Default;
+import com.sse.abtester.strategies.UrlRewrite;
 
 // TODO: Auto-generated Javadoc
 /**
@@ -69,6 +72,12 @@ public class VariantSelectionFilterTest {
 
         VM = mock(VariantManager.class);
         vsf = new VariantSelectionFilter();
+        try {
+            vsf.init(new MockFilterConfig());
+        } catch (ServletException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
         vsf.setVariantManager(VM);
         vsf.setVSKEY(VSKEY);
     }
@@ -95,13 +104,13 @@ public class VariantSelectionFilterTest {
     @Test
     public void testEnrollsReqIfNoCookie() throws IOException, ServletException {
 
-        IVariationStrategy forward= new VariationStrategyForward();
+        IVariationStrategy forward = new Default();
         VariantBean testvariant = mock(VariantBean.class);
         when(testvariant.getKey()).thenReturn(TESTKEY);
-        when(testvariant.getVariantProps()).thenReturn(new Properties());
+
         when(testvariant.getKey()).thenReturn(TESTKEY);
         when(testvariant.getVariationStrategy()).thenReturn(forward);
-        when(testvariant.getVariantProps()).thenReturn(new Properties());
+
         when(VM.enrollRequest(mockReq)).thenReturn(testvariant);
         vsf.doFilter(mockReq, mockRes, fc);
 
@@ -121,11 +130,11 @@ public class VariantSelectionFilterTest {
     public void testUpdatesVMIfCookie() throws IOException,
             ServletException {
         VariantBean testvariant = mock(VariantBean.class);
-        IVariationStrategy forward= new VariationStrategyForward();
+        IVariationStrategy forward= new UrlRewrite();
 
         when(testvariant.getKey()).thenReturn(TESTKEY);
         when(testvariant.getVariationStrategy()).thenReturn(forward);
-        when(testvariant.getVariantProps()).thenReturn(new Properties());
+
         when(VM.enrollRequest(mockReq)).thenReturn(testvariant);
 
         mockReq.setCookies(new Cookie(VSKEY,""+TESTKEY)); // set the test cookie

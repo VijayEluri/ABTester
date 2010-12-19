@@ -3,7 +3,7 @@
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the GNU Affero Public License v3.0 which accompanies this distribution, and is available at
  * http://www.gnu.org/licenses/agpl-3.0.html
- * 
+ *
  * Contributors:
  *     Wayne Stidolph - initial API and implementation
  ******************************************************************************/
@@ -19,6 +19,7 @@ import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 
 import com.sse.abtester.external.IVariant;
+import com.sse.abtester.strategies.Default;
 
 // TODO: Auto-generated Javadoc
 /**
@@ -54,6 +55,7 @@ public class VariationAssignerTest {
             vb.setDispatchable(true); // else non of the bean is
                                 // copied into normalized/weighted collections
             vb.setTargetFreq(1.0/num_variants);
+            vb.setVariationStrategy(new Default());
             coll.put(name,vb);
         }
         VariationAssigner<VariantBean>  va =

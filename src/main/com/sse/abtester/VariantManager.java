@@ -11,15 +11,23 @@ package com.sse.abtester;
 
 import com.sse.abtester.external.*;
 
+import java.io.File;
 import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 
+import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import lombok.Getter;
 import lombok.Setter;
 
+
+import org.springframework.web.context.ServletContextAware;
+import org.springframework.web.filter.DelegatingFilterProxy;
 
 import com.sse.abtester.external.VariationRequestBean;
 
@@ -30,7 +38,15 @@ import com.sse.abtester.external.VariationRequestBean;
  * @author wstidolph
  */
 
-public class VariantManager  {
+public class VariantManager implements ServletContextAware {
+
+    @Setter
+    private DelegatingFilterProxy urlRewriteFilterProxy;
+
+    ServletContext sc;
+    @Setter
+    @Getter
+    String rewriteFilterConfPath;
 
     /* variables */
     /** The assigner. */
@@ -65,13 +81,32 @@ public class VariantManager  {
     @Getter
     private double controlPercentage = 1.0;
 
-
-    /** The known variants (whether or not Dispatchable).
+    /**
+     * The known variants (whether or not Dispatchable).
      *
      */
     @Getter
-    private AbstractMap<String, IVariant<VariantBean>>
-    knownVariants = new ConcurrentHashMap<String, IVariant<VariantBean>>();
+    private AbstractMap<String, IVariant<VariantBean>> knownVariants = new ConcurrentHashMap<String, IVariant<VariantBean>>();
+
+    @Setter
+    @Getter
+    private ArrayList<VariationRequestBean> preloadRequests;
+
+    private Queue<VariationRequestBean> requestQueue = new ArrayBlockingQueue<VariationRequestBean>(
+            16);
+
+    public int drainRequestQueue() {
+        int numProcessed = 0;
+
+        for (VariationRequestBean vrb : requestQueue) {
+            IVariant<VariantBean> var = addVariationRequest(vrb);
+            System.out.println("processed request " + vrb.getRequestName()
+                    + " producing " + var);
+
+            numProcessed++;
+        }
+        return numProcessed;
+    }
 
     /**
      * Update tracking of received responses for variant.
@@ -94,7 +129,6 @@ public class VariantManager  {
         IVariant<VariantBean> assigned = null;
         if (assigner != null && Math.random() > controlPercentage) {
             assigned = assigner.enrollRequest(request);
-
         }
         return assigned;
     }
@@ -142,12 +176,14 @@ public class VariantManager  {
     public IVariant<VariantBean> addVariationRequest(
             final VariationRequestBean vrb) {
 
-        IVariant<VariantBean> vb = new VariantBean(vrb.getRequestKey());
-        vb.setRequestedExecutions(vrb.requestedExecutions);
-        vb.setTargetFreq(vrb.requestedTargetFreq);
+        IVariant<VariantBean> vb = new VariantBean(vrb);
         vb.setKey(vb.hashCode());
-
+        vb.getVariationStrategy().install(); // notify baccking system
+        knownVariants.put("" + vb.getKey(), vb);
         assigner.setIVariantCollection(knownVariants);
+
+        // throw NPE for fail-early detect of config errs
+        // urlRewriteFilter.reloadConf();
         return vb;
     }
 
@@ -160,8 +196,7 @@ public class VariantManager  {
     private void deactivateIV(final IVariant<VariantBean> ivb) {
         if (ivb != null) {
             ivb.setDispatchable(false);
-            System.out.println("deactivating variant: " + ivb.getName()); // TODO
-                                                                            // log
+            sc.log("deactivating variant: " + ivb.getName());
         }
     }
 
@@ -179,12 +214,15 @@ public class VariantManager  {
             deactivateIV(o);
             knownVariants.remove(o);
             assigner.setIVariantCollection(knownVariants);
+
+            // throw NPE for fail-early detect of config errs
+
         }
         return o;
     }
 
     /**
-     * Gets the i variant by request key.
+     * Gets the IVariant by request key.
      *
      * @param key
      *            the key
@@ -195,10 +233,41 @@ public class VariantManager  {
         return o;
     }
 
+    public void startup() {
+
+        System.out.println("VARIANT MANAGER STARTUP!");
+        if (preloadRequests != null) {
+            int preloaded = 0;
+            for (VariationRequestBean vrb : preloadRequests) {
+                requestQueue.add(vrb);
+                preloaded++;
+            }
+            System.out.println("preloaded " + preloaded
+                    + " VariationRequestBeans");
+        } else {
+            System.out.println("no preloadRequests");
+        }
+        int started = drainRequestQueue();
+        System.out.println("Began with " + started + " variation requests");
+    }
+
+    public void shutdown(){
+        System.out.println("VARIANT MANAGER SHUTDOWN!");
+    }
+
     /* constructor */
     /**
      * Instantiates a new variant manager.
      */
     public VariantManager() {
+    }
+
+    @Override
+    public void setServletContext(ServletContext servletContext) {
+        sc = servletContext;
+        String filepath = sc.getRealPath(rewriteFilterConfPath);
+
+        File filterConfFile = new File(filepath);
+        System.out.println("found " + filepath + "and it is Writeable? " + filterConfFile.canWrite());
     }
 }

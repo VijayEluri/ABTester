@@ -3,8 +3,9 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:context="http://www.springframework.org/schema/context"
   xmlns:int-http="http://www.springframework.org/schema/integration/http"
   xmlns:int-jms="http://www.springframework.org/schema/integration/jms"
-  xmlns:jms="http://www.springframework.org/schema/jms" xmlns:oxm="http://www.springframework.org/schema/oxm"
-  xmlns:util="http://www.springframework.org/schema/util" xmlns:sec="http://www.springframework.org/schema/security"
+  xmlns:p="http://www.springframework.org/schema/p" xmlns:jms="http://www.springframework.org/schema/jms"
+  xmlns:oxm="http://www.springframework.org/schema/oxm" xmlns:util="http://www.springframework.org/schema/util"
+  xmlns:sec="http://www.springframework.org/schema/security"
   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
     http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
     http://www.springframework.org/schema/integration/http http://www.springframework.org/schema/integration/http/spring-integration-http.xsd
@@ -14,17 +15,40 @@
     http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
     http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security.xsd">
 
-  <bean id="assigner" class="com.sse.abtester.VariationAssigner" />
-  <bean id="variantmanager" class="com.sse.abtester.VariantManager">
-    <property name="assigner" ref="assigner" />
-  </bean>
+  <context:property-override
+    location="classpath:/abtester-application.properties, classpath:/abtester-local.properties classpath:/abtester-variants.xml"
+    ignore-resource-not-found="true" ignore-unresolvable="true" />
 
-  <bean id="keygen" class="com.sse.abtester.KeyGenerator" />
+  <!-- setup the web filter, connect to variantManager -->
 
-  <bean id="abtester" class="com.sse.abtester.VariantSelectionFilter">
-    <property name="variantManager" ref="variantmanager" />
+  <bean id="abtesterFilter" class="com.sse.abtester.VariantSelectionFilter">
+    <property name="variantManager" ref="variantManager" />
     <property name="VSKEY" value="com.sse.abtester.VSKEY" />
     <property name="kgen" ref="keygen" />
   </bean>
+
+  <!-- main ABTester manager -->
+  <!-- the preload 'variantsToPreload' bean is a list from abtester-preload.xml -->
+  <bean id="variantManager" class="com.sse.abtester.VariantManager">
+    <property name="controlPercentage" value="0.0"></property>
+    <property name="assigner" ref="assigner" />
+    <property name="urlRewriteFilterProxy" ref="ABTesterUrlRewriteFilter" />
+    <property name="rewriteFilterConfPath" value="/WEB-INF/urlrewrite.xml"/>
+    <property name="preloadRequests" ref="variantsToPreload" />
+  </bean>
+
+  <!-- the UrlRewrite proxy setup (to expose the Proxy to variantManager)-->
+
+  <bean id="ABTesterUrlRewriteFilter" class="org.springframework.web.filter.DelegatingFilterProxy">
+    <property name="targetBeanName" value="UrlRewriteFilter"/>
+  </bean>
+  <bean id="UrlRewriteFilter" class="org.tuckey.web.filters.urlrewrite.UrlRewriteFilter" />
+
+
+  <bean id="assigner" class="com.sse.abtester.VariationAssigner" />
+
+  <bean id="default_strategy" class="com.sse.abtester.strategies.Default" />
+
+  <bean id="keygen" class="com.sse.abtester.KeyGenerator" />
 
 </beans>

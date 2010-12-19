@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Ant-Version: Apache Ant 1.7.1
+Created-By: 1.6.0-b105 (Sun Microsystems Inc.)
+Extension-Name: urlrewritefilter
+Specification-Title: Url Rewrite Filter
+Specification-Vendor: Paul Tuckey
+Specification-Version: 3.2.0
+Implementation-Title: Url Rewrite Filter
+Implementation-Vendor: Paul Tuckey
+Implementation-Version: 3.2.0
+

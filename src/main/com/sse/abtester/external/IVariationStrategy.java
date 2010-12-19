@@ -11,8 +11,10 @@ package com.sse.abtester.external;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Properties;
 
 import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -21,7 +23,7 @@ import javax.servlet.http.HttpServletResponse;
 /**
  * The Interface IVariationStrategy.
  */
-public interface IVariationStrategy extends Serializable {
+public interface IVariationStrategy extends Serializable, Cloneable {
 
     /**
      * The Enum Strategy.
@@ -30,19 +32,26 @@ public interface IVariationStrategy extends Serializable {
         /**
          * Basic strategy, just call the chain.
          */
-        DEFAULT,
+        DEFAULT ("com.sse.abtester.strategies.Default"),
         /**
          * Tell ABTester Filter to attach an ABSTYLE property to the request,;
          * use of the ABSTYLE is up to the Varier.
          */
-        ATTACH_STYLE,
+        ATTACH_STYLE ("com.sse.abtester.strategies.Attach"),
 
-        /** Tells ABTester to forward the request (with attached properties) to a name (as identified by the strategyValue). */
-        FORWARD,
+        /**
+         * Use UrlRewriteFilter rules.
+         * @see http://www.tuckey.org/urlrewrite/
+         */
+        REWRITE ("com.sse.abtester.strategies.UrlRewrite"),
 
-        /** Tells ABTester to redirect the client browser, to a URL given in the strategyValue. */
-        REDIRECT
+        /** cause instantiation of class identified in strategyValue string */
+        CUSTOM ("");
 
+        String implementingClassName;
+        Strategy(String classname){
+            implementingClassName = classname;
+        }
     }
 
     /**
@@ -52,27 +61,32 @@ public interface IVariationStrategy extends Serializable {
      */
     Strategy getStrategy();
 
-    /**
-     * Gets the strategy value.
-     *
-     * @return the strategy value
-     */
-    String getStrategyValue();
+    void setProps(Properties props);
+    Properties getProps();
+
 
     /**
-     * Set a value to be used in strategy application. Actual use varies between
-     * Strategies:
-     * <ul>
-     * <li>ATTACH_STYLE => passed as the value of the ABSTYLE key</li>
-     * <li>FORWARD => used to name the servlet to which to Forward
-     * </ul>
+     * Install this IVariant into its backing system. For
+     * example, a UrlRewrite might use this call to rewrite
+     * and reload the Filter definition.
      *
-     * @param selector the new strategy value
+     * @return true, if successful
      */
-    void setStrategyValue(String selector);
+    boolean install();
 
     /**
-     * Execute.
+     * Removes the IVariant from teh backing system. For
+     * example, a UrlRewrite might use this call to rewrite
+     * and reload the Filter definition.
+     *
+     * @return true, if successful
+     */
+    boolean remove();
+
+    Object clone();
+    /**
+     * Execute. Yes, I know a GOF Strategy really shouldn't take
+     * parameters in the execute; maybe I'll rename to process()
      *
      * @param chain the chain
      * @param hReq the h req
@@ -80,7 +94,7 @@ public interface IVariationStrategy extends Serializable {
      * @throws IOException Signals that an I/O exception has occurred.
      * @throws ServletException the servlet exception
      */
-    void execute(FilterChain chain, HttpServletRequest hReq,
+    void execute(FilterConfig filterConfig, FilterChain chain, HttpServletRequest hReq,
             HttpServletResponse hResp)
          throws IOException, ServletException;
 

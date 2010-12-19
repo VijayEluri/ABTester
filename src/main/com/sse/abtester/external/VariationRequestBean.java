@@ -11,12 +11,15 @@ package com.sse.abtester.external;
 
 
 import java.io.Serializable;
+import java.util.Properties;
+
+import com.google.common.collect.Multimap;
 
 import lombok.Data;
 
 // TODO: Auto-generated Javadoc
 /**
- * The Class VariationRequestBean.
+ * The Class VariationRequestBean (just a DTO).
  */
 public /* (non-Javadoc)
   * @see java.lang.Object#toString()
@@ -24,7 +27,7 @@ public /* (non-Javadoc)
  @Data class VariationRequestBean implements Serializable {
 
     /** The request key. */
-    String requestKey;
+    public String requestName;
 
     /** The requested executions. */
     public int requestedExecutions;
@@ -33,14 +36,11 @@ public /* (non-Javadoc)
     public double requestedTargetFreq = 0.5f;
 
     /** The eligible percentage cap. */
-    double eligiblePercentageCap = 1.0f; // 1.0 is 100%, all-eligible
+    public double eligiblePercentageCap = 1.0f; // 1.0 is 100%, all-eligible
 
-    /** The component selector. */
-    IVariationComponentSelector componentSelector;
-
-    /** The variation strategy. */
-    IVariationStrategy variationStrategy;
+    /** The variation strategy; e.g., com.sse.abtester.external.VariationStrategyForward */
+    public String variationStrategyClassName;
 
     /** The variation properties. */
-    Object variationProperties;
+    public Properties variationProperties;
 }

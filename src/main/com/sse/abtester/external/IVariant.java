@@ -12,6 +12,7 @@ package com.sse.abtester.external;
 import java.io.Serializable;
 import java.util.Properties;
 
+import com.google.common.collect.Multimap;
 import com.sse.abtester.IHasTargetFreq;
 
 // TODO: Auto-generated Javadoc
@@ -136,20 +137,6 @@ public interface IVariant<T> extends IHasTargetFreq, Serializable {
     int incRespondedCounter();
 
     /**
-     * Gets the component selector.
-     *
-     * @return the component selector
-     */
-    IVariationComponentSelector getComponentSelector();
-
-    /**
-     * Sets the component selector.
-     *
-     * @param selector the new component selector
-     */
-    void setComponentSelector(IVariationComponentSelector selector);
-
-    /**
      * Gets the variation strategy.
      *
      * @return the variation strategy
@@ -164,23 +151,10 @@ public interface IVariant<T> extends IHasTargetFreq, Serializable {
     void setVariationStrategy(IVariationStrategy strategy);
 
     /**
-     * Gets the variant props.
-     *
-     * @return the variant props
-     */
-    Properties getVariantProps();
-
-    /**
-     * Sets the variant props.
-     *
-     * @param variantProps the new variant props
-     */
-    void setVariantProps(Properties variantProps);
-
-    /**
      * Copy.
      *
      * @return shallow copy of the IVariant.
      */
     IVariant<T> copy(); // same idea as 'clone'
+
 }
