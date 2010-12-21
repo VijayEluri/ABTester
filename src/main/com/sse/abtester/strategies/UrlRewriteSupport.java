@@ -19,12 +19,10 @@ import org.w3c.dom.*;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import lombok.Setter;
 import lombok.Synchronized;
 
 /**
- * Manages the interfaces to the UrlRewriteFilter (does config file rewriting,
- * etc).
+ * Utility methods to rewrite the UrlRewriteFilter config file.
  *
  * @see http://www.tuckey.org/urlrewrite/
  * @author wstidolph
@@ -42,13 +40,10 @@ public/*
 class UrlRewriteSupport {
 
     /**
-     * Sets the conf file name.
-     *
-     * @param confFileName
-     *            the new conf file name
+     * Prevent instantiation.
      */
-    @Setter
-    private String confFileName;
+    private UrlRewriteSupport() {
+    }
 
     /**
      * Adds the rule to the UrlRewriter config file (confFileName); synchronized
@@ -61,23 +56,29 @@ class UrlRewriteSupport {
      * @return true if/only if the rule was added
      */
     @Synchronized
-    public boolean addRule(final String ruletext, final String key) {
+    public static boolean addRule(String targetId, final String ruletext,
+            final String key) {
         // first, make the text into a node
+        if(ruletext == null || "".equals(ruletext)) {
+            return false;
+        }
         Document ruleDoc = makeDocFrom(ruletext);
-        if(ruleDoc == null) {
+        if (ruleDoc == null) {
             System.out.println("couldn't make ruleDoc from: " + ruletext);
         }
         ensureRuleDocIsNamed(ruleDoc, key);
 
-        Document confDoc = getDocumentFromId(confFileName);
+        Node ruleNode = ruleDoc.getDocumentElement();
+        Document confDoc = getDocumentFromId(targetId);
         if (confDoc == null) {
             return false;
         }
 
         boolean wasAdded = false;
-        boolean confDocChanged = importNode(ruleDoc, confDoc);
-        if (confDocChanged) {
-            String result = putDoc(confDoc);
+        Node importedNode = confDoc.importNode(ruleNode, true);
+        if (importedNode != null) {
+            confDoc.getDocumentElement().appendChild(importedNode);
+            String result = putDoc(targetId, confDoc);
             wasAdded = (result != null) && (result != "");
         }
 
@@ -85,22 +86,15 @@ class UrlRewriteSupport {
 
     }
 
-    public boolean importNode(final Node sourceNode, Document targetDoc) {
-        boolean wasImported = false;
+    public static void ensureRuleDocIsNamed(Document node, final String key) {
+        if (node == null) return;
 
-        Node importedNode = targetDoc.importNode(sourceNode, true);
-        targetDoc.getDocumentElement().appendChild(importedNode);
-        wasImported = true;
-        return wasImported;
-    }
-
-    public void ensureRuleDocIsNamed(Document node, final String key) {
         // ensure the node is <name>-tagged
         NodeList names = node.getElementsByTagName("name");
 
         Node nameNode = null;
 
-        if (names.getLength() == 0){
+        if (names.getLength() == 0) {
             // need a <name>
             nameNode = node.createElement("name"); // leave it empty
             node.getDocumentElement().appendChild(nameNode);
@@ -112,11 +106,10 @@ class UrlRewriteSupport {
         nameNode.setTextContent(content + "_" + key);
     }
 
-    public Document makeDocFrom(String text){
+    public static Document makeDocFrom(String text) {
         Document doc = null;
         try {
-            InputStream is = new ByteArrayInputStream(
-                    text.getBytes("UTF-8"));
+            InputStream is = new ByteArrayInputStream(text.getBytes("UTF-8"));
             doc = makeDocFrom(new InputSource(is));
             try {
                 is.close();
@@ -130,6 +123,7 @@ class UrlRewriteSupport {
         }
         return doc;
     }
+
     /**
      * Create a Document (w3c) from an input stream.
      *
@@ -137,7 +131,7 @@ class UrlRewriteSupport {
      *            the input stream to parse
      * @return null if fails, else the Document
      */
-    public Document makeDocFrom(final InputSource is) {
+    public static Document makeDocFrom(final InputSource is) {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         Document doc = null;
         try {
@@ -148,7 +142,8 @@ class UrlRewriteSupport {
         } catch (SAXException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
-        } catch (IOException e) {
+        }
+        catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
@@ -163,10 +158,10 @@ class UrlRewriteSupport {
      * @return true if/only if the rule was found and removed
      */
     @Synchronized
-    public boolean removeRule(String ruleNameSuffix) {
+    public static boolean removeRule(String targetId, String ruleNameSuffix) {
         boolean isRemoved = false;
         Document confDoc;
-        confDoc = getDocumentFromId(confFileName);
+        confDoc = getDocumentFromId(targetId);
         if (confDoc == null) {
             return false;
         }
@@ -194,7 +189,7 @@ class UrlRewriteSupport {
                 return false; // bail out, this doc isn't what we expect
             }
             confDoc.removeChild(ruleNode);
-            putDoc(confDoc);
+            putDoc(targetId, confDoc);
             isRemoved = true;
         }
         return isRemoved;
@@ -207,7 +202,7 @@ class UrlRewriteSupport {
      *            system ID (such as file path URL)
      * @return the Document (or null)
      */
-    private Document getDocumentFromId(final String sysId) {
+    private static Document getDocumentFromId(final String sysId) {
         Document doc = null;
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         // set factory options
@@ -238,9 +233,9 @@ class UrlRewriteSupport {
      *            the Document to be streamed into the new file.
      * @return the old file's new name (has suffix _<timeOfReplacement>)
      */
-    private String putDoc(final Document doc) {
+    private static String putDoc(String targetId, final Document doc) {
         if (doc == null) {
-            System.out.println("null doc, not writing out new " + confFileName);
+            System.out.println("null doc, not writing out new " + targetId);
             return "";
         }
         SimpleDateFormat df = new SimpleDateFormat("yyMMddHHmmss.SSSZ");
@@ -258,7 +253,7 @@ class UrlRewriteSupport {
         }
 
         DOMSource source = new DOMSource(doc);
-        String newFileName = confFileName + "_" + dateString + "_new";
+        String newFileName = targetId + "_" + dateString + "_new";
         File newFile = new File(newFileName);
         StreamResult result = new StreamResult(newFile);
         try {
@@ -270,11 +265,11 @@ class UrlRewriteSupport {
         }
 
         // swap in the new File
-        File oldFile = new File(confFileName);
-        File newNameForOldFile = new File(confFileName + "_" + dateString);
+        File oldFile = new File(targetId);
+        File newNameForOldFile = new File(targetId + "_" + dateString);
         oldFile.renameTo(newNameForOldFile);
 
-        File newNameForNewFile = new File(confFileName);
+        File newNameForNewFile = new File(targetId);
         newFile.renameTo(newNameForNewFile);
 
         return newNameForOldFile.getName();
