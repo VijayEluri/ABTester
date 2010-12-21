@@ -16,12 +16,12 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.w3c.dom.*;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 import lombok.Setter;
 import lombok.Synchronized;
 
-// TODO: Auto-generated Javadoc
 /**
  * Manages the interfaces to the UrlRewriteFilter (does config file rewriting,
  * etc).
@@ -62,59 +62,74 @@ class UrlRewriteSupport {
      */
     @Synchronized
     public boolean addRule(final String ruletext, final String key) {
-        boolean wasAdded = false;
         // first, make the text into a node
-        Node ruleNode = null;
-        try {
-            InputStream is = new ByteArrayInputStream(
-                    ruletext.getBytes("UTF-8"));
-            Document doc = makeDocFrom(is);
-            ruleNode = doc.getFirstChild();
-
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+        Document ruleDoc = makeDocFrom(ruletext);
+        if(ruleDoc == null) {
+            System.out.println("couldn't make ruleDoc from: " + ruletext);
         }
-        if (ruleNode == null) {
+        ensureRuleDocIsNamed(ruleDoc, key);
+
+        Document confDoc = getDocumentFromId(confFileName);
+        if (confDoc == null) {
             return false;
         }
 
+        boolean wasAdded = false;
+        boolean confDocChanged = importNode(ruleDoc, confDoc);
+        if (confDocChanged) {
+            String result = putDoc(confDoc);
+            wasAdded = (result != null) && (result != "");
+        }
+
+        return wasAdded;
+
+    }
+
+    public boolean importNode(final Node sourceNode, Document targetDoc) {
+        boolean wasImported = false;
+
+        Node importedNode = targetDoc.importNode(sourceNode, true);
+        targetDoc.getDocumentElement().appendChild(importedNode);
+        wasImported = true;
+        return wasImported;
+    }
+
+    public void ensureRuleDocIsNamed(Document node, final String key) {
         // ensure the node is <name>-tagged
-        NodeList children = ruleNode.getChildNodes();
-        if (children == null) {
-            System.out.println("resletext no child nodes: " + ruletext);
-            return false;
-        }
+        NodeList names = node.getElementsByTagName("name");
+
         Node nameNode = null;
-        for (int idx = 0; idx < children.getLength(); idx++) {
-            Node tempNode = children.item(idx);
 
-            if ("name".equals(tempNode.getNodeName())) {
-                nameNode = tempNode;
-            }
-            break;
-        }
-
-        Document confDoc = getConfFileDocument(confFileName);
-
-        if (nameNode == null) {
-            nameNode = confDoc.createElement("name");
-            ruleNode.appendChild(nameNode);
+        if (names.getLength() == 0){
+            // need a <name>
+            nameNode = node.createElement("name"); // leave it empty
+            node.getDocumentElement().appendChild(nameNode);
+        } else {
+            nameNode = names.item(0);
         }
 
         String content = nameNode.getTextContent();
         nameNode.setTextContent(content + "_" + key);
-
-        // finally, get the doc, append the node, put the doc
-
-        if (confDoc == null || "".equals(confDoc))
-            return false;
-
-        String result = putDoc(confDoc);
-        wasAdded = (result != null) && (result != "");
-
-        return wasAdded;
     }
 
+    public Document makeDocFrom(String text){
+        Document doc = null;
+        try {
+            InputStream is = new ByteArrayInputStream(
+                    text.getBytes("UTF-8"));
+            doc = makeDocFrom(new InputSource(is));
+            try {
+                is.close();
+            } catch (IOException ioe) {
+                ioe.printStackTrace();
+                is = null;
+                return null;
+            }
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return doc;
+    }
     /**
      * Create a Document (w3c) from an input stream.
      *
@@ -122,7 +137,7 @@ class UrlRewriteSupport {
      *            the input stream to parse
      * @return null if fails, else the Document
      */
-    public Document makeDocFrom(final InputStream is) {
+    public Document makeDocFrom(final InputSource is) {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         Document doc = null;
         try {
@@ -151,7 +166,7 @@ class UrlRewriteSupport {
     public boolean removeRule(String ruleNameSuffix) {
         boolean isRemoved = false;
         Document confDoc;
-        confDoc = getConfFileDocument(confFileName);
+        confDoc = getDocumentFromId(confFileName);
         if (confDoc == null) {
             return false;
         }
@@ -186,23 +201,22 @@ class UrlRewriteSupport {
     }
 
     /**
-     * Gets the writeable conf file.
+     * Gets and XML DOM Documaent based on a system identifer.
      *
-     * @param fName
-     *            the f name
-     * @return the writeable conf file
-     * @throws ParserConfigurationException
-     * @throws IOException
-     * @throws SAXException
+     * @param sysId
+     *            system ID (such as file path URL)
+     * @return the Document (or null)
      */
-    private Document getConfFileDocument(String fName) {
+    private Document getDocumentFromId(final String sysId) {
         Document doc = null;
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        // set factory options
+        factory.setIgnoringElementContentWhitespace(true);
 
         DocumentBuilder builder;
         try {
             builder = factory.newDocumentBuilder();
-            doc = builder.parse(new File(fName));
+            doc = builder.parse(new InputSource(sysId));
         } catch (ParserConfigurationException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();

@@ -17,7 +17,6 @@ import com.sse.abtester.external.IVariant;
 import com.sse.abtester.external.IVariationStrategy;
 import com.sse.abtester.strategies.UrlRewrite;
 
-// TODO: Auto-generated Javadoc
 /**
  * The Class VariantBeanTest.
  */
