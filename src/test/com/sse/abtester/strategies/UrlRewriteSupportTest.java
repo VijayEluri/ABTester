@@ -114,7 +114,7 @@ public class UrlRewriteSupportTest {
         assertTrue(ruleAdded);
 
         String rewritten = getFileText(TESTFILE);
-        System.out.println("I GOT: " + rewritten);
+        System.out.println("After Adding A Rule: " + rewritten);
         // assert will fail because addRule adds name and key
         // assertTrue(rewritten.contains(ruleTextSimple));
     }
@@ -139,11 +139,20 @@ public class UrlRewriteSupportTest {
 
     @Test
     public void testRemoveRule() {
-        // fail("Not yet implemented"); // TODO
+        boolean ruleAdded = UrlRewriteSupport.addRule(TESTFILE,
+                ruleTextWithName, "0005");
+        assertTrue(ruleAdded);
+        String rewritten = getFileText(TESTFILE);
+        System.out.println("After Adding the Rule: " + rewritten);
+
+        boolean ruleRemoved = UrlRewriteSupport.removeRule(TESTFILE, "0005");
+        rewritten = getFileText(TESTFILE);
+        System.out.println("After Removing the Rule: " + rewritten);
+        assertTrue(ruleRemoved);
     }
 
     String ruleTextEmptyString = "";
     String ruleTextEmptyRuleTag = "<rule/>";
     String ruleTextSimple = "<rule><from>/some/test/resource.html</from><to>/some/test/resource_variant.html</to></rule>";
-    String ruleTextWithName = "<rule><from>/some/test/resource.html</from><to>/some/test/resource_variant.html</to><name>WayneRule</name></rule>";
+    String ruleTextWithName = "<rule><from>/some/test/resource.html</from><to>/some/test/resource_variant.html</to><name>SillyTestRule</name></rule>";
 }

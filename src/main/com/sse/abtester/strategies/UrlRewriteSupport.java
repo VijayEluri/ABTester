@@ -66,7 +66,7 @@ class UrlRewriteSupport {
         if (ruleDoc == null) {
             System.out.println("couldn't make ruleDoc from: " + ruletext);
         }
-        ensureRuleDocIsNamed(ruleDoc, key);
+        ensureRuleIsNamed(ruleDoc, key);
 
         Node ruleNode = ruleDoc.getDocumentElement();
         Document confDoc = getDocumentFromId(targetId);
@@ -86,7 +86,7 @@ class UrlRewriteSupport {
 
     }
 
-    public static void ensureRuleDocIsNamed(Document node, final String key) {
+    public static void ensureRuleIsNamed(Document node, final String key) {
         if (node == null) return;
 
         // ensure the node is <name>-tagged
@@ -158,27 +158,30 @@ class UrlRewriteSupport {
      * @return true if/only if the rule was found and removed
      */
     @Synchronized
-    public static boolean removeRule(String targetId, String ruleNameSuffix) {
+    public static boolean removeRule(final String targetId, final String ruleNameSuffix) {
         boolean isRemoved = false;
         Document confDoc;
         confDoc = getDocumentFromId(targetId);
         if (confDoc == null) {
+            System.out.println("Fails getDocumentFromId");
             return false;
         }
 
         // find an element with the given name (ruleKey)
         NodeList nl = confDoc.getElementsByTagName("name");
+        int nameCount = nl.getLength();
         Node nameNode = null;
-        for (int idx = 0; idx < nl.getLength(); idx++) {
-            Node tempNode = nl.item(idx);
+        for (int i = 0; i < nameCount; i++) {
+            Node tempNode = nl.item(i);
             String content = tempNode.getTextContent();
-            if (content.endsWith("__" + ruleNameSuffix)) {
+            System.out.println("<name> "+i+" / " + nameCount + " : "+ content);
+            if (content.endsWith("_" + ruleNameSuffix)) {
                 nameNode = tempNode;
+                break;
             }
-            break;
         }
 
-        // and verify it's <rule>, <outbound-rule>, <class-rule>
+        // and verify it's <rule>, <outbound-rule>, or <class-rule>
         if (nameNode != null) {
             Node ruleNode = nameNode.getParentNode();
             // make sure it's a rule
@@ -191,6 +194,8 @@ class UrlRewriteSupport {
             confDoc.removeChild(ruleNode);
             putDoc(targetId, confDoc);
             isRemoved = true;
+        } else {
+            System.out.println("Did not find a <name> node");
         }
         return isRemoved;
     }
