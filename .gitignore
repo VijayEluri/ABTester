@@ -1,2 +1,4 @@
+.settings
 target/
 build/
+src/test/com/sse/abtester/strategies/urlrewrite*
