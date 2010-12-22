@@ -174,7 +174,6 @@ class UrlRewriteSupport {
         for (int i = 0; i < nameCount; i++) {
             Node tempNode = nl.item(i);
             String content = tempNode.getTextContent();
-            System.out.println("<name> "+i+" / " + nameCount + " : "+ content);
             if (content.endsWith("_" + ruleNameSuffix)) {
                 nameNode = tempNode;
                 break;
@@ -191,7 +190,7 @@ class UrlRewriteSupport {
             if (!isRule) {
                 return false; // bail out, this doc isn't what we expect
             }
-            confDoc.removeChild(ruleNode);
+            ruleNode.getParentNode().removeChild(ruleNode);
             putDoc(targetId, confDoc);
             isRemoved = true;
         } else {
